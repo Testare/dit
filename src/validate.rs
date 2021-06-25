@@ -1,9 +1,9 @@
-use std::fmt;
-use std::io;
-use std::io::{BufReader, BufRead};
-use std::fs::{File};
-use serde_json;
 use super::dit_core::message::Message;
+use serde_json;
+use std::fmt;
+use std::fs::File;
+use std::io;
+use std::io::{BufRead, BufReader};
 
 pub enum ValidationError {
     IoError(String, io::Error),
@@ -12,7 +12,7 @@ pub enum ValidationError {
         line_number: usize,
         last_message: Message,
         failed_message: Message,
-    }
+    },
 }
 
 impl fmt::Display for ValidationError {
@@ -25,24 +25,30 @@ impl fmt::Display for ValidationError {
     }
 }
 
-pub fn validate(file_name: &str) -> Result<(), ValidationError>{
+pub fn validate(file_name: &str) -> Result<(), ValidationError> {
     // let contents: String = fs::read_to_string(file_name)?;
     // if let Ok(file) = File::open(file_name) {
-    let file = File::open(file_name).map_err(|err|ValidationError::IoError(String::from(file_name), err))?;
+    let file = File::open(file_name)
+        .map_err(|err| ValidationError::IoError(String::from(file_name), err))?;
     let lines = BufReader::new(file).lines();
     lines
-        .map(|line_result|line_result.unwrap())
-        .map(|line|serde_json::from_str::<Message>(line.as_str()).unwrap())
+        .map(|line_result| line_result.unwrap())
+        .map(|line| serde_json::from_str::<Message>(line.as_str()).unwrap())
         .zip(1..)
-        .try_fold(Message::default(), |last_message, (next_message, line_number)| 
-            if last_message.accepts_next_message(&next_message) {
-                Ok(next_message)
-            } else {
-                Err(ValidationError::FailedValidation {
-                    file_name: String::from(file_name),
-                    failed_message: next_message,
-                    last_message,
-                    line_number
-                })
-            }).and(Ok(())) // We don't want to pass final value of the fold on
+        .try_fold(
+            Message::default(),
+            |last_message, (next_message, line_number)| {
+                if last_message.accepts_next_message(&next_message) {
+                    Ok(next_message)
+                } else {
+                    Err(ValidationError::FailedValidation {
+                        file_name: String::from(file_name),
+                        failed_message: next_message,
+                        last_message,
+                        line_number,
+                    })
+                }
+            },
+        )
+        .and(Ok(())) // We don't want to pass final value of the fold on
 }

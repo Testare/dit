@@ -1,28 +1,36 @@
-
-use clap::{Arg, App, SubCommand, ArgMatches};
-use super::validate::{validate};
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufRead, Write};
-use serde_json;
 use super::dit_core::message::Message;
+use super::validate::validate;
+use clap::{App, Arg, ArgMatches, SubCommand};
+use serde_json;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
- return App::new("dit")
+    return App::new("dit")
         .version("0.1")
         .author("Logan W, testare.i9z@gmail.com")
         .about("A CLI game")
-        .arg(Arg::with_name("config").short("c").long("config").value_name("CONFIG").help("Sets a config file").takes_value(true))
-        .subcommand(SubCommand::with_name("test")
-                                      .about("controls testing features")
-                                      .version("")
-                                      .author("Someone E. <someone_else@other.com>")
-                                      .arg(Arg::with_name("debug")
-                                          .short("d")
-                                          .help("print debug information verbosely")))
+        .arg(
+            Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .value_name("CONFIG")
+                .help("Sets a config file")
+                .takes_value(true),
+        )
+        .subcommand(
+            SubCommand::with_name("test")
+                .about("controls testing features")
+                .version("")
+                .author("Someone E. <someone_else@other.com>")
+                .arg(
+                    Arg::with_name("debug")
+                        .short("d")
+                        .help("print debug information verbosely"),
+                ),
+        )
         .subcommand(subcommand_raw_add())
         .subcommand(subcommand_validate());
-
-
 }
 
 pub fn handle_matches(app_m: ArgMatches) {
@@ -40,10 +48,12 @@ pub fn handle_matches(app_m: ArgMatches) {
                 let lines = BufReader::new(file).lines();
                 last_message = lines
                     .last()
-                    .map (|message_str| {
+                    .map(|message_str| {
                         println!("In the opt map with {:?}", message_str);
-                        serde_json::from_str::<Message>(message_str.unwrap().as_str()).unwrap() // Fix unwrapping later
-                    }).unwrap();
+                        serde_json::from_str::<Message>(message_str.unwrap().as_str()).unwrap()
+                        // Fix unwrapping later
+                    })
+                    .unwrap();
             } else {
                 // println!("There was a problem loading that file [{}]", file_name);
                 if let Ok(_) = File::create(file_name) {
@@ -76,12 +86,28 @@ pub fn handle_matches(app_m: ArgMatches) {
 //| Subcommand to add a raw message to a file
 fn subcommand_raw_add<'a, 'b>() -> App<'a, 'b> {
     return SubCommand::with_name("rawadd")
-        .arg(Arg::with_name("filename").short("f").long("filename").value_name("FILENAME").help("Sets the file to add message").takes_value(true))
-        .arg(Arg::with_name("content").help("Select file to validate").required(true).index(1));
+        .arg(
+            Arg::with_name("filename")
+                .short("f")
+                .long("filename")
+                .value_name("FILENAME")
+                .help("Sets the file to add message")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("content")
+                .help("Select file to validate")
+                .required(true)
+                .index(1),
+        );
 }
 
 //| Subcommand to validate a file.
 fn subcommand_validate<'a, 'b>() -> App<'a, 'b> {
-    return SubCommand::with_name("validate")
-        .arg(Arg::with_name("filename").help("Select file to validate").required(true).index(1));
+    return SubCommand::with_name("validate").arg(
+        Arg::with_name("filename")
+            .help("Select file to validate")
+            .required(true)
+            .index(1),
+    );
 }

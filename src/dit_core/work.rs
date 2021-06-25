@@ -1,5 +1,3 @@
-
-
 const BITS: [u8; 8] = [
     0b0, 0b1, 0b11, 0b111, 0b1111, 0b1_1111, 0b11_1111, 0b111_1111,
 ];
@@ -10,7 +8,8 @@ fn pad_bits(bytes: &[u8], size: usize) -> Vec<u8> {
             let mut result = vec![0; padding];
             result.extend_from_slice(bytes);
             result
-        }).unwrap_or(Vec::from(bytes))
+        })
+        .unwrap_or(Vec::from(bytes))
 }
 
 pub fn bit_match(match_count: usize, left: &[u8], right: &[u8]) -> bool {

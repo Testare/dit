@@ -1,15 +1,14 @@
-use serde::{Serialize, Deserialize};
-use super::state::{State, Update, update};
+use super::state::{update, State, Update};
+use serde::{Deserialize, Serialize};
 
 pub mod spells {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub enum Spell {
         FireBall,
-        IceDagger
+        IceDagger,
     }
-
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -19,21 +18,20 @@ pub enum Action {
     Version(usize),
     AttemptSeekEncounter,
     AttemptLearnSpell(spells::Spell),
-    CastSpell(spells::Spell)
+    CastSpell(spells::Spell),
 }
 
 impl Action {
-    pub fn execute(&self, state: &State)-> (State, Update) {
+    pub fn execute(&self, state: &State) -> (State, Update) {
         match self {
-            Action::Version(version) => {
-                (State {
+            Action::Version(version) => (
+                State {
                     version: *version,
                     ..*state
-                }, update(format!("Updated version to {}", version)))
-            },
-            _ => {
-                (state.clone(), Update::default())
-            }
+                },
+                update(format!("Updated version to {}", version)),
+            ),
+            _ => (state.clone(), Update::default()),
         }
     }
 
@@ -42,13 +40,13 @@ impl Action {
             Action::Version(_) => 1,
             Action::AttemptSeekEncounter => 5,
             Action::CastSpell(_) => 8,
-            _ => 5
+            _ => 5,
         }
     }
 }
 
 impl Default for Action {
-    fn default() -> Self { 
+    fn default() -> Self {
         Action::NoOp
     }
 }

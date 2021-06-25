@@ -1,33 +1,32 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct State {
     pub version: usize,
-    pub hp: isize
+    pub hp: isize,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Update {
     pub message: String,
-    pub successful: bool
+    pub successful: bool,
 }
 
 pub fn update<S: ToString>(message: S) -> Update {
     Update {
         message: message.to_string(),
-        successful: true
+        successful: true,
     }
 }
 
 impl Default for Update {
     fn default() -> Update {
         Update {
-            message:String::new(),
-            successful: true
+            message: String::new(),
+            successful: true,
         }
     }
 }
-
 
 /* use serde::{Deserialize, Serialize};
 
@@ -107,7 +106,7 @@ enum PlayerMessage {
 
 struct Line {
     key: String,
-    // message: Message, 
+    // message: Message,
 }
 
 enum CompiledLine<T> {
