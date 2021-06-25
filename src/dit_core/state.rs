@@ -1,3 +1,34 @@
+use serde::{Serialize, Deserialize};
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct State {
+    pub version: usize,
+    pub hp: isize
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Update {
+    pub message: String,
+    pub successful: bool
+}
+
+pub fn update<S: ToString>(message: S) -> Update {
+    Update {
+        message: message.to_string(),
+        successful: true
+    }
+}
+
+impl Default for Update {
+    fn default() -> Update {
+        Update {
+            message:String::new(),
+            successful: true
+        }
+    }
+}
+
+
 /* use serde::{Deserialize, Serialize};
 
 
