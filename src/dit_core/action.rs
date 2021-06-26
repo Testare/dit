@@ -1,4 +1,4 @@
-use super::state::{update, State, Update};
+use super::state::{State};
 use serde::{Deserialize, Serialize};
 
 pub mod spells {
@@ -12,34 +12,33 @@ pub mod spells {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "lowercase", tag = "type")]
 pub enum Action {
     NoOp,
-    Marker(String),
-    Version(usize),
+    Marker { content: String },
+    UpdateVersion { version: usize },
     AttemptSeekEncounter,
-    AttemptLearnSpell(spells::Spell),
-    CastSpell(spells::Spell),
+    AttemptLearnSpell { spell: spells::Spell },
+    CastSpell { spell: spells::Spell },
 }
 
 impl Action {
-    pub fn execute(&self, state: &State) -> (State, Update) {
+    // apply (Does not handle user interaction, just the result. What is used to process change in state from message in file
+    pub fn apply(&self, state: State) -> State {
         match self {
-            Action::Version(version) => (
-                State {
-                    version: *version,
-                    ..*state
-                },
-                update(format!("Updated version to {}", version)),
-            ),
-            _ => (state.clone(), Update::default()),
+            Action::UpdateVersion{version} => State {
+                version: *version,
+                ..state
+            },
+            _ => state,
         }
     }
 
     pub fn bit_cost(&self, _state: &State) -> usize {
         match self {
-            Action::Version(_) => 1,
+            Action::UpdateVersion{..} => 1,
             Action::AttemptSeekEncounter => 5,
-            Action::CastSpell(_) => 8,
+            Action::CastSpell{..} => 8,
             _ => 5,
         }
     }

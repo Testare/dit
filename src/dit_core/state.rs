@@ -12,10 +12,12 @@ pub struct Update {
     pub successful: bool,
 }
 
-pub fn update<S: ToString>(message: S) -> Update {
-    Update {
-        message: message.to_string(),
-        successful: true,
+impl Default for State {
+    fn default() -> State {
+        State {
+            version: 0_01_00,
+            hp: 100,
+        }
     }
 }
 

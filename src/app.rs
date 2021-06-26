@@ -1,9 +1,8 @@
-use super::dit_core::message::Message;
+use super::dit_core::action::Action;
+use super::dit_core::game;
 use super::validate::validate;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use serde_json;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{stdout};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
     return App::new("dit")
@@ -33,6 +32,7 @@ pub fn get_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(subcommand_validate());
 }
 
+// Should later change it to have its own Writer
 pub fn handle_matches(app_m: ArgMatches) {
     let config_arg = app_m.value_of("config");
     match app_m.subcommand() {
@@ -41,33 +41,13 @@ pub fn handle_matches(app_m: ArgMatches) {
         }
         ("rawadd", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or(".dit");
-
-            let last_message: Message;
-
-            if let Ok(file) = File::open(file_name) {
-                let lines = BufReader::new(file).lines();
-                last_message = lines
-                    .last()
-                    .map(|message_str| {
-                        println!("In the opt map with {:?}", message_str);
-                        serde_json::from_str::<Message>(message_str.unwrap().as_str()).unwrap()
-                        // Fix unwrapping later
-                    })
-                    .unwrap();
-            } else {
-                // println!("There was a problem loading that file [{}]", file_name);
-                if let Ok(_) = File::create(file_name) {
-                    last_message = Message::default()
-                } else {
-                    panic!("Unable to find/create file {}", &file_name);
-                }
-            }
-
             let message_payload: &str = arg_m.value_of("content").unwrap();
-            let next_message = last_message.gen_next_message(message_payload, 5);
-            let mut file = OpenOptions::new().append(true).open(file_name).unwrap();
-            let string: String = serde_json::to_string(&next_message).unwrap();
-            write!(file, "{}\n", string).unwrap();
+            let k = game::with_game_state(file_name, &mut stdout(), |_, _| {
+                Ok(Action::Marker{
+                    content: String::from(message_payload)
+                })
+            });
+            k.unwrap();
         }
         ("validate", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or("dummy");

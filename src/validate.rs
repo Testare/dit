@@ -1,4 +1,5 @@
 use super::dit_core::message::Message;
+use super::dit_core::state::State;
 use serde_json;
 use std::fmt;
 use std::fs::File;
@@ -36,10 +37,10 @@ pub fn validate(file_name: &str) -> Result<(), ValidationError> {
         .map(|line| serde_json::from_str::<Message>(line.as_str()).unwrap())
         .zip(1..)
         .try_fold(
-            Message::default(),
-            |last_message, (next_message, line_number)| {
-                if last_message.accepts_next_message(&next_message) {
-                    Ok(next_message)
+            (State::default(), Message::default()),
+            |(state, last_message), (next_message, line_number)| {
+                if last_message.accepts_next_message(&next_message, &state) {
+                    Ok((next_message.action().apply(state), next_message))
                 } else {
                     Err(ValidationError::FailedValidation {
                         file_name: String::from(file_name),
