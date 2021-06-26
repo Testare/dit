@@ -1,4 +1,4 @@
-use super::state::{State};
+use super::state::State;
 use serde::{Deserialize, Serialize};
 
 pub mod spells {
@@ -26,19 +26,16 @@ impl Action {
     // apply (Does not handle user interaction, just the result. What is used to process change in state from message in file
     pub fn apply(&self, state: State) -> State {
         match self {
-            Action::UpdateVersion{version} => State {
-                version: *version,
-                ..state
-            },
+            Action::UpdateVersion { version } => state.update_version(*version),
             _ => state,
         }
     }
 
     pub fn bit_cost(&self, _state: &State) -> usize {
         match self {
-            Action::UpdateVersion{..} => 1,
+            Action::UpdateVersion { .. } => 1,
             Action::AttemptSeekEncounter => 5,
-            Action::CastSpell{..} => 8,
+            Action::CastSpell { .. } => 8,
             _ => 5,
         }
     }

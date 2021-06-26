@@ -1,14 +1,11 @@
-use super::action::Action;
-use super::state::State;
-use super::work::bit_match;
+use super::{work::bit_match, Action, State};
 
 use hex;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use sha3::{Digest, Sha3_224};
-use std::fmt;
-use std::fmt::Display;
+use std::fmt::{self, Display};
 use std::iter;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
