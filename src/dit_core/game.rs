@@ -1,23 +1,7 @@
-use super::{dit_result, io_error, Action, Error, Message, State, Update};
+use super::{dit_result, io_error, Error, Message, State, ToActionUpdate};
 use serde_json;
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader, Write};
-
-pub trait ToActionUpdate {
-    fn to_action_update(self) -> (Action, Update);
-}
-
-impl ToActionUpdate for (Action, Update) {
-    fn to_action_update(self) -> (Action, Update) {
-        self
-    }
-}
-
-impl ToActionUpdate for Action {
-    fn to_action_update(self) -> (Action, Update) {
-        (self, Update::default())
-    }
-}
 
 pub fn with_game_state<A, F>(file_name: &str, action_apply: F) -> Result<(), Error>
 where
