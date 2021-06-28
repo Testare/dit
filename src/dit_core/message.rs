@@ -15,6 +15,8 @@ pub struct Message {
 }
 
 impl Message {
+
+    /// Returns the action this message represents
     pub fn action(&self) -> &Action {
         &self.action
     }
@@ -26,6 +28,10 @@ impl Message {
         hasher
     }
 
+    /// Checks whether this message and the next message are validly linked.
+    /// 
+    /// The state is necessary as we might need that to determine the bit cost
+    /// for an action.
     pub fn accepts_next_message(&self, next_message: &Message, state: &State) -> bool {
         let mut hasher = self.get_hasher_for_payload(&next_message.action);
         hasher.update(hex::decode(&next_message.key).unwrap()); // Wrap in result?
@@ -37,12 +43,13 @@ impl Message {
         )
     }
 
+    /// Generate a message that can follow this one for the specified action.
     pub fn gen_next_message(&self, action: Action, state: &State) -> Self {
         let hasher = self.get_hasher_for_payload(&action);
         let threshold = action.bit_cost(state);
         let prev_hash_bytes =
-            hex::decode(&self.key).expect("Key in message not decodeable as hex string"); // Maybe don't unwrap?
-        let mut rng = thread_rng();
+            hex::decode(&self.key).expect("Key in message not decodeable as hex string");
+        let mut rng = thread_rng(); // Might need to pass to the function to enable reproducible testing
 
         let key = iter::repeat_with(|| rng.gen::<u32>())
             .map(|n| n.to_le_bytes())

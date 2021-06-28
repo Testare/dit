@@ -1,2 +1,2 @@
 pub mod app;
-mod dit_core;
+pub mod dit_core;

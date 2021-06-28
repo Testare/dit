@@ -2,7 +2,7 @@ use super::dit_core::{validate, with_game_state, Action};
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
-    return App::new("dit")
+    App::new("dit")
         .version("0.1")
         .author("Logan W, testare.i9z@gmail.com")
         .about("A CLI game")
@@ -26,7 +26,7 @@ pub fn get_app<'a, 'b>() -> App<'a, 'b> {
                 ),
         )
         .subcommand(subcommand_raw_add())
-        .subcommand(subcommand_validate());
+        .subcommand(subcommand_validate())
 }
 
 // Should later change it to have its own Writer

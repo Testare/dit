@@ -12,6 +12,22 @@ fn pad_bits(bytes: &[u8], size: usize) -> Vec<u8> {
         .unwrap_or(Vec::from(bytes))
 }
 
+/// Tests that two byte slices match X bits at the end.
+/// 
+/// If the byte slices don't contain enough bits to reach `match_count` bits, 
+/// they are padded with 0's. This is done largely to deal with 
+/// `hex::decode("000")` returning an empty slice.
+/// 
+/// # Examples
+/// 
+/// ```rust, ignore
+/// use dit::dit_core::work::bit_match;
+/// let left = [0b1111_1111u8, 0b01010101];
+/// let right = [0b11u8, 0b10101010];
+/// assert!(bit_match(10, left, right));
+/// // The 11th bit from the right doesn't match
+/// assert!(!bit_match(11, left, right));
+/// ```
 pub fn bit_match(match_count: usize, left: &[u8], right: &[u8]) -> bool {
     let bytes = match_count / 8;
     let bitc = match_count % 8;
@@ -29,6 +45,7 @@ mod test {
 
     const BYTES_0: [u8; 5] = [0x43, 0x33, 0xF8, 0x00, 0xFA];
     const BYTES_1: [u8; 5] = [0x43, 0x33, 0xF8, 0x80, 0xFA];
+    const ONE_BYTE: [u8; 1] = [0b10_0000];
     // Room for improvement
 
     #[test]
@@ -58,14 +75,22 @@ mod test {
 
     #[test]
     fn bit_match_matches_one_byte() {
-        let one_byte = [0b1111];
-        assert!(bit_match(8, &one_byte, &one_byte))
+        assert!(bit_match(8, &ONE_BYTE, &ONE_BYTE))
     }
 
-    #[should_panic]
     #[test]
-    fn bit_match_matches_too_many_bits() {
-        let one_byte = [0b1111];
-        assert!(bit_match(9, &one_byte, &one_byte))
+    fn bit_match_matching_smaller_than_threshold() {
+        assert!(bit_match(9, &ONE_BYTE, &ONE_BYTE))
+    }
+
+    #[test]
+    fn bit_match_matching_with_extra_zeroes() {
+        let extra_zero = [0b0, 0b10_0000];
+        assert!(bit_match(9, &extra_zero, &ONE_BYTE))
+    }
+
+    #[test]
+    fn bit_match_matching_no_bytes_are_treated_like_zero() {
+        assert!(bit_match(5, &[], &ONE_BYTE))
     }
 }

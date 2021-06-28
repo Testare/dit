@@ -1,3 +1,7 @@
+
+//! This module is for the core of the `dit` game, which should not change even
+//! as the interface changes or has different interfaces.
+
 mod action;
 mod error;
 mod game;
