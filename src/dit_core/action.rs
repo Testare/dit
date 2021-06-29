@@ -1,4 +1,4 @@
-use super::state::{DitState, State as StateA};
+use super::state::{State, StateA};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub mod spells {
@@ -11,8 +11,8 @@ pub mod spells {
     }
 }
 
-pub trait DitAction: ToString + Serialize + DeserializeOwned + Default {
-    type State: DitState;
+pub trait Action: ToString + Serialize + DeserializeOwned + Default {
+    type State: State;
     fn apply(&self, state: Self::State) -> Self::State ;
     fn bit_cost(&self, state: &Self::State) -> usize;
 }
@@ -25,13 +25,13 @@ pub trait DitAction: ToString + Serialize + DeserializeOwned + Default {
 /// 
 /// Similar conceptually to actions/reducers in [Redux](https://redux.js.org)
 /// 
-/// Action is responsible for the logic to change the state (In regards to 
+/// ActionA is responsible for the logic to change the state (In regards to 
 /// version), and determining bit cost from current state. It is not responsible
 /// for user interaction of any sort for generating the action.
 /// 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase", tag = "type")]
-pub enum Action {
+pub enum ActionA {
     NoOp,
     Marker { content: String },
     UpdateVersion { version: usize },
@@ -40,13 +40,13 @@ pub enum Action {
     CastSpell { spell: spells::Spell },
 }
 
-impl DitAction for Action {
+impl Action for ActionA {
     type State = StateA;
     /// Applies the change represented by the action to the state.
     /// TODO consider using mutable borrow instead of move-and-return
     fn apply(&self, state: Self::State) -> Self::State {
         match self {
-            Action::UpdateVersion { version } => state.update_version(*version),
+            ActionA::UpdateVersion { version } => state.update_version(*version),
             _ => state,
         }
     }
@@ -69,21 +69,21 @@ impl DitAction for Action {
     /// for cheaper.
     fn bit_cost(&self, _state: &Self::State) -> usize {
         match self {
-            Action::UpdateVersion { .. } => 1,
-            Action::AttemptSeekEncounter => 5,
-            Action::CastSpell { .. } => 8,
+            ActionA::UpdateVersion { .. } => 1,
+            ActionA::AttemptSeekEncounter => 5,
+            ActionA::CastSpell { .. } => 8,
             _ => 5,
         }
     }
 }
 
-impl Default for Action {
+impl Default for ActionA {
     fn default() -> Self {
-        Action::NoOp
+        ActionA::NoOp
     }
 }
 
-impl ToString for Action {
+impl ToString for ActionA {
     fn to_string(&self) -> String {
         serde_json::to_string(self).expect("All actions should be serializable")
     }

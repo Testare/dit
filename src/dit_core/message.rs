@@ -1,4 +1,4 @@
-use super::{work::bit_match, DitAction, Action, DitState, State};
+use super::{work::bit_match, Action};
 
 use hex;
 use rand::{thread_rng, Rng};
@@ -9,13 +9,13 @@ use std::fmt::{self, Display};
 use std::iter;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(bound = "A: DitAction")]
-pub struct Message<A: DitAction> {
+#[serde(bound = "A: Action")]
+pub struct Message<A: Action> {
     key: String,
     action: A,
 }
 
-impl <A: DitAction> Message<A> {
+impl <A: Action> Message<A> {
 
     /// Returns the action this message represents
     pub fn action(&self) -> &A {
@@ -75,13 +75,13 @@ impl <A: DitAction> Message<A> {
     }
 }
 
-impl <A: DitAction> Display for Message<A> {
+impl <A: Action> Display for Message<A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         serde_json::to_string(self).map_or_else(|_| Err(fmt::Error), |json| write!(f, "{}", json))
     }
 }
 
-impl <A: DitAction> Default for Message<A> {
+impl <A: Action> Default for Message<A> {
     fn default() -> Self {
         Message {
             key: String::from("00000000"),

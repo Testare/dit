@@ -1,10 +1,9 @@
-use super::{io_error, DitAction, DitState, Error, Message, State};
+use super::{io_error, Action, Error, Message};
 use serde_json;
-use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-pub fn validate<A: DitAction> (file_name: &str) -> Result<(), Error<A>> {
+pub fn validate<A: Action> (file_name: &str) -> Result<(), Error<A>> {
     let file = File::open(file_name).map_err(io_error(file_name))?;
     let lines= BufReader::new(file).lines();
     lines

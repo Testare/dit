@@ -1,9 +1,9 @@
-use super::{Message, DitAction, DitState};
+use super::{Message, Action};
 use serde_json;
 use std::{fmt, io};
 
 #[derive(Debug)]
-pub enum Error<A: DitAction> {
+pub enum Error<A: Action> {
     IoError(String, io::Error),
     SerdeError(serde_json::Error),
     FailedValidation {
@@ -14,7 +14,7 @@ pub enum Error<A: DitAction> {
     },
 }
 
-impl <A: DitAction> fmt::Display for Error<A> {
+impl <A: Action> fmt::Display for Error<A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::IoError(file_name, err) if err.kind() == io::ErrorKind::NotFound  => write!(f, "Um, sorry, but I can't find {}.", file_name.as_str()),
@@ -25,11 +25,11 @@ impl <A: DitAction> fmt::Display for Error<A> {
     }
 }
 
-pub fn  io_error<A: DitAction>(file_name: &str) -> impl FnOnce(io::Error) -> Error<A> {
+pub fn  io_error<A: Action>(file_name: &str) -> impl FnOnce(io::Error) -> Error<A> {
     let file_name_owned = String::from(file_name);
     move |error| Error::IoError(file_name_owned, error)
 }
 
-pub fn dit_result<A: DitAction, T>(result: Result<T, serde_json::Error>) -> Result<T, Error<A>> {
+pub fn dit_result<A: Action, T>(result: Result<T, serde_json::Error>) -> Result<T, Error<A>> {
     result.map_err(Error::SerdeError)
 }

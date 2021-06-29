@@ -1,11 +1,11 @@
-use super::{dit_result, io_error, DitState, Error, Message, DitAction, Action, State, ToActionUpdate};
+use super::{dit_result, io_error, Error, Message, Action, ToActionUpdate};
 use serde_json;
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader, Write};
 
 pub fn with_game_state<'a, A, U, F>(file_name: &'a str, action_apply: F) -> Result<(), Error<A>>
 where
-    A: DitAction,
+    A: Action,
     F: FnOnce(&A::State) -> Result<U, Error<A>>,
     U: ToActionUpdate<A>,
 {
