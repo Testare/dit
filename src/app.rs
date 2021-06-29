@@ -1,4 +1,5 @@
-use super::dit_core::{validate, with_game_state, ActionA};
+use super::dit_core::{validate, with_game_state};
+use super::mode_a::{ActionA};
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
