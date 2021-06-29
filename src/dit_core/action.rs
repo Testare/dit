@@ -1,5 +1,5 @@
-use super::state::State;
-use serde::{Deserialize, Serialize};
+use super::state::{DitState, State as StateA};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub mod spells {
     use serde::{Deserialize, Serialize};
@@ -9,6 +9,12 @@ pub mod spells {
         FireBall,
         IceDagger,
     }
+}
+
+pub trait DitAction: ToString + Serialize + DeserializeOwned + Default {
+    type State: DitState;
+    fn apply(&self, state: Self::State) -> Self::State ;
+    fn bit_cost(&self, state: &Self::State) -> usize;
 }
 
 /// Represents a change in state.
@@ -34,10 +40,11 @@ pub enum Action {
     CastSpell { spell: spells::Spell },
 }
 
-impl Action {
+impl DitAction for Action {
+    type State = StateA;
     /// Applies the change represented by the action to the state.
     /// TODO consider using mutable borrow instead of move-and-return
-    pub fn apply(&self, state: State) -> State {
+    fn apply(&self, state: Self::State) -> Self::State {
         match self {
             Action::UpdateVersion { version } => state.update_version(*version),
             _ => state,
@@ -60,7 +67,7 @@ impl Action {
     /// would be. For instance, a high level wizard might learn spells easier 
     /// than a warrior, or you might be able to store mana to cast a spell later
     /// for cheaper.
-    pub fn bit_cost(&self, _state: &State) -> usize {
+    fn bit_cost(&self, _state: &Self::State) -> usize {
         match self {
             Action::UpdateVersion { .. } => 1,
             Action::AttemptSeekEncounter => 5,

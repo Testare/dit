@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+pub trait DitState: Default {
+    // type Action: ToString + Serialize;
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct State {
     version: usize,
@@ -24,6 +28,10 @@ impl State {
         }
         State { version, ..*self }
     }
+}
+
+impl DitState for State {
+
 }
 
 impl Default for State {

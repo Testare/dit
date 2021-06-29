@@ -1,17 +1,18 @@
-use super::{io_error, Error, Message, State};
+use super::{io_error, DitAction, DitState, Error, Message, State};
 use serde_json;
+use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-pub fn validate(file_name: &str) -> Result<(), Error> {
+pub fn validate<A: DitAction> (file_name: &str) -> Result<(), Error<A>> {
     let file = File::open(file_name).map_err(io_error(file_name))?;
-    let lines = BufReader::new(file).lines();
+    let lines= BufReader::new(file).lines();
     lines
         .map(|line_result| line_result.unwrap())
-        .map(|line| serde_json::from_str::<Message>(line.as_str()).unwrap())
+        .map(|line| serde_json::from_str::<Message<A>>(line.as_str()).unwrap())
         .zip(1..)
         .try_fold(
-            (State::default(), Message::default()),
+            (A::State::default(), Message::default()),
             |(state, last_message), (next_message, line_number)| {
                 if last_message.accepts_next_message(&next_message, &state) {
                     Ok((next_message.action().apply(state), next_message))

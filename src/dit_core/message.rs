@@ -1,4 +1,4 @@
-use super::{work::bit_match, Action, State};
+use super::{work::bit_match, DitAction, Action, DitState, State};
 
 use hex;
 use rand::{thread_rng, Rng};
@@ -9,19 +9,20 @@ use std::fmt::{self, Display};
 use std::iter;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct Message {
+#[serde(bound = "A: DitAction")]
+pub struct Message<A: DitAction> {
     key: String,
-    action: Action,
+    action: A,
 }
 
-impl Message {
+impl <A: DitAction> Message<A> {
 
     /// Returns the action this message represents
-    pub fn action(&self) -> &Action {
+    pub fn action(&self) -> &A {
         &self.action
     }
 
-    fn get_hasher_for_payload(&self, action: &Action) -> Sha3_224 {
+    fn get_hasher_for_payload(&self, action: &A) -> Sha3_224 {
         let mut hasher = Sha3_224::new();
         hasher.update(self.key.as_str());
         hasher.update(action.to_string());
@@ -32,7 +33,7 @@ impl Message {
     /// 
     /// The state is necessary as we might need that to determine the bit cost
     /// for an action.
-    pub fn accepts_next_message(&self, next_message: &Message, state: &State) -> bool {
+    pub fn accepts_next_message(&self, next_message: &Message<A>, state: &A::State) -> bool {
         let mut hasher = self.get_hasher_for_payload(&next_message.action);
         hasher.update(hex::decode(&next_message.key).unwrap()); // Wrap in result?
         let threshold = next_message.action.bit_cost(state);
@@ -44,7 +45,7 @@ impl Message {
     }
 
     /// Generate a message that can follow this one for the specified action.
-    pub fn gen_next_message(&self, action: Action, state: &State) -> Self {
+    pub fn gen_next_message(&self, action: A, state: &A::State) -> Self {
         let hasher = self.get_hasher_for_payload(&action);
         let threshold = action.bit_cost(state);
         let prev_hash_bytes =
@@ -74,17 +75,17 @@ impl Message {
     }
 }
 
-impl Display for Message {
+impl <A: DitAction> Display for Message<A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         serde_json::to_string(self).map_or_else(|_| Err(fmt::Error), |json| write!(f, "{}", json))
     }
 }
 
-impl Default for Message {
+impl <A: DitAction> Default for Message<A> {
     fn default() -> Self {
         Message {
             key: String::from("00000000"),
-            action: Action::default(),
+            action: A::default(),
         }
     }
 }

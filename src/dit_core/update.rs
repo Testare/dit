@@ -1,18 +1,17 @@
-use super::Action;
 use serde::{Deserialize, Serialize};
 
-pub trait ToActionUpdate {
-    fn to_action_update(self) -> (Action, Update);
+pub trait ToActionUpdate<A> {
+    fn to_action_update(self) -> (A, Update);
 }
 
-impl ToActionUpdate for (Action, Update) {
-    fn to_action_update(self) -> (Action, Update) {
+impl <A> ToActionUpdate<A> for (A, Update) {
+    fn to_action_update(self) -> (A, Update) {
         self
     }
 }
 
-impl ToActionUpdate for Action {
-    fn to_action_update(self) -> (Action, Update) {
+impl <A> ToActionUpdate<A> for A {
+    fn to_action_update(self) -> (A, Update) {
         (self, Update::default())
     }
 }

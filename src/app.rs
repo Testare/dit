@@ -1,4 +1,4 @@
-use super::dit_core::{validate, with_game_state, Action};
+use super::dit_core::{validate, with_game_state, Action, State};
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
@@ -39,7 +39,7 @@ pub fn handle_matches(app_m: ArgMatches) {
         ("rawadd", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or(".dit");
             let message_payload: &str = arg_m.value_of("content").unwrap();
-            let k = with_game_state(file_name, |_| {
+            let k = with_game_state::<Action, _, _>(file_name, |_| {
                 Ok(Action::Marker {
                     content: String::from(message_payload),
                 })
@@ -48,7 +48,7 @@ pub fn handle_matches(app_m: ArgMatches) {
         }
         ("validate", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or("dummy");
-            let validation_result = validate(file_name);
+            let validation_result = validate::<Action>(file_name);
             match validation_result {
                 Ok(_) => println!("I would consider {} as valid", file_name),
                 Err(err) => println!("{}", err),

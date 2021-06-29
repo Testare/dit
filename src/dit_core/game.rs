@@ -1,12 +1,13 @@
-use super::{dit_result, io_error, Error, Message, State, ToActionUpdate};
+use super::{dit_result, io_error, DitState, Error, Message, DitAction, Action, State, ToActionUpdate};
 use serde_json;
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader, Write};
 
-pub fn with_game_state<A, F>(file_name: &str, action_apply: F) -> Result<(), Error>
+pub fn with_game_state<'a, A, U, F>(file_name: &'a str, action_apply: F) -> Result<(), Error<A>>
 where
-    F: FnOnce(&State) -> Result<A, Error>,
-    A: ToActionUpdate,
+    A: DitAction,
+    F: FnOnce(&A::State) -> Result<U, Error<A>>,
+    U: ToActionUpdate<A>,
 {
     let mut file = OpenOptions::new()
         .append(true)
@@ -16,11 +17,11 @@ where
         .map_err(io_error(file_name))?;
 
     let (state, last_message) = BufReader::new(&file).lines().try_fold(
-        (State::default(), Message::default()),
+        (A::State::default(), Message::default()),
         |(state, _), line_result| {
             let line = line_result.map_err(io_error(file_name))?;
             let new_message =
-                serde_json::from_str::<Message>(line.as_str()).map_err(Error::SerdeError)?;
+                serde_json::from_str::<Message<A>>(line.as_str()).map_err(Error::SerdeError)?;
             Ok((new_message.action().apply(state), new_message))
         },
     )?;
