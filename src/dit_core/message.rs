@@ -11,7 +11,7 @@ use std::iter;
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(bound = "A: Action")]
 pub struct Message<A: Action> {
-    key: String,
+    key: HexString,
     action: A,
 }
 
@@ -24,8 +24,8 @@ impl <A: Action> Message<A> {
 
     fn get_hasher_for_payload(&self, action: &A) -> Sha3_224 {
         let mut hasher = Sha3_224::new();
-        hasher.update(self.key.as_str());
-        hasher.update(action.to_string());
+        hasher.update(self.key.to_bytes());
+        hasher.update(serde_json::to_string(action).expect("Issue serializing action"));
         hasher
     }
 
@@ -35,11 +35,11 @@ impl <A: Action> Message<A> {
     /// for an action.
     pub fn accepts_next_message(&self, next_message: &Message<A>, state: &A::State) -> bool {
         let mut hasher = self.get_hasher_for_payload(&next_message.action);
-        hasher.update(hex::decode(&next_message.key).unwrap()); // Wrap in result?
+        hasher.update(&next_message.key.to_bytes());
         let threshold = next_message.action.bit_cost(state);
         bit_match(
             threshold,
-            &hex::decode(self.key.as_str()).unwrap(),
+            Vec::from(&self.key).as_slice(),
             &hasher.finalize(),
         )
     }
@@ -48,8 +48,7 @@ impl <A: Action> Message<A> {
     pub fn gen_next_message(&self, action: A, state: &A::State) -> Self {
         let hasher = self.get_hasher_for_payload(&action);
         let threshold = action.bit_cost(state);
-        let prev_hash_bytes =
-            hex::decode(&self.key).expect("Key in message not decodeable as hex string");
+        let prev_hash_bytes = self.key.to_bytes();
         let mut rng = thread_rng(); // Might need to pass to the function to enable reproducible testing
 
         let key = iter::repeat_with(|| rng.gen::<u32>())
@@ -69,7 +68,7 @@ impl <A: Action> Message<A> {
         // Generate random hashes. If we use a u32, we can make hashes of length 32 bits. Would we ever want one with more?
         // Take the random hashes until one matches with threshold amount of bits at the end.
         Message {
-            key: hex::encode(key),
+            key: HexString::from(&key[..]),
             action,
         }
     }
@@ -84,8 +83,44 @@ impl <A: Action> Display for Message<A> {
 impl <A: Action> Default for Message<A> {
     fn default() -> Self {
         Message {
-            key: String::from("00000000"),
+            key: HexString::default(),
             action: A::default(),
         }
+    }
+}
+
+/// A wrapper for a string of hexadecimal characters
+/// There is no way to initialize it with a string of other characters other than deserializing tampered data, so it should be safe to deserialize
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(transparent)]
+pub struct HexString(String);
+
+impl HexString {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        Vec::from(self)
+    }
+}
+
+impl From<&[u8]> for HexString {
+    fn from(bytes:&[u8]) -> HexString {
+        HexString(hex::encode(bytes))
+    }
+}
+
+impl From<&HexString> for Vec<u8> {
+    fn from(hex_string: &HexString) -> Vec<u8> {
+        hex::decode(&hex_string.0).unwrap()
+    }
+}
+
+impl ToString for HexString {
+    fn to_string(&self) -> String {
+        self.0.clone()
+    }
+}
+
+impl Default for HexString {
+    fn default() -> Self {
+        HexString(String::from("00000000"))
     }
 }

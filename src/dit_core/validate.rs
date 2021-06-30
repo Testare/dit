@@ -8,7 +8,7 @@ pub fn validate<A: Action> (file_name: &str) -> Result<(), Error<A>> {
     let lines= BufReader::new(file).lines();
     lines
         .map(|line_result| line_result.unwrap())
-        .map(|line| serde_json::from_str::<Message<A>>(line.as_str()).unwrap())
+        .map(|line| serde_json::from_str::<Message<A>>(line.as_str()).unwrap()) // Should probably refactor to return a SeDe error
         .zip(1..)
         .try_fold(
             (A::State::default(), Message::default()),
