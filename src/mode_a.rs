@@ -1,4 +1,4 @@
-use super::dit_core::{Action, State, Mode};
+use super::dit_core::{Action, HexString, Mode, State};
 use serde::{Deserialize, Serialize};
 
 pub mod spells {
@@ -10,7 +10,6 @@ pub mod spells {
         IceDagger,
     }
 }
-
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase", tag = "type")]
@@ -33,20 +32,20 @@ impl Action for ActionA {
         }
     }
 
-    /// The bit cost of the action. 
-    /// 
-    /// In order for an action to be applied and saved, it takes a certain 
-    /// amount of computational work as a cost. An action is wrapped in a 
+    /// The bit cost of the action.
+    ///
+    /// In order for an action to be applied and saved, it takes a certain
+    /// amount of computational work as a cost. An action is wrapped in a
     /// [`Message`](super::Message) object with a hexadecimal key. When a new
     /// action is being applied, to be saved it needs to be added to a message
-    /// with a randomly generated key. The hash of the previous message's key, 
-    /// the action json, and the randomly generated key is compared with the 
+    /// with a randomly generated key. The hash of the previous message's key,
+    /// the action json, and the randomly generated key is compared with the
     /// previous message's key. The last `n` bits have to match.
-    /// 
-    /// This function determines how many bits have to match, which determines 
+    ///
+    /// This function determines how many bits have to match, which determines
     /// how long on average it will take to apply an action. It takes state as
     /// a parameter, since the state might influence how difficult an action
-    /// would be. For instance, a high level wizard might learn spells easier 
+    /// would be. For instance, a high level wizard might learn spells easier
     /// than a warrior, or you might be able to store mana to cast a spell later
     /// for cheaper.
     fn bit_cost(&self, _state: &Self::State) -> usize {
@@ -98,15 +97,17 @@ impl StateA {
 }
 
 impl State for StateA {
-    fn read_header(_header: &str) -> Self {
-        Self::default()
-    }
-    fn root_hash(&self) -> &str {
-        ""
+    fn read_header_line(&self, _header_line: &str) -> Self {
+        self.clone()
     }
 
-    fn mode() -> Mode { Mode::A }
+    fn root_hash(&self) -> HexString {
+        HexString::default()
+    }
 
+    fn mode() -> Mode {
+        Mode::A
+    }
 }
 
 impl Default for StateA {

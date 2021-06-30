@@ -13,13 +13,13 @@ fn pad_bits(bytes: &[u8], size: usize) -> Vec<u8> {
 }
 
 /// Tests that two byte slices match X bits at the end.
-/// 
-/// If the byte slices don't contain enough bits to reach `match_count` bits, 
-/// they are padded with 0's. This is done largely to deal with 
+///
+/// If the byte slices don't contain enough bits to reach `match_count` bits,
+/// they are padded with 0's. This is done largely to deal with
 /// `hex::decode("000")` returning an empty slice.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust, ignore
 /// use dit::dit_core::work::bit_match;
 /// let left = [0b1111_1111u8, 0b01010101];

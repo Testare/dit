@@ -1,5 +1,5 @@
 use super::dit_core::{validate, with_game_state};
-use super::mode_a::{ActionA};
+use super::mode_a::ActionA;
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn get_app<'a, 'b>() -> App<'a, 'b> {
@@ -40,7 +40,7 @@ pub fn handle_matches(app_m: ArgMatches) {
         ("rawadd", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or(".dit");
             let message_payload: &str = arg_m.value_of("content").unwrap();
-            let k = with_game_state::<ActionA, _, _>(file_name, |_| {
+            let k = with_game_state(file_name, |_| {
                 Ok(ActionA::Marker {
                     content: String::from(message_payload),
                 })
