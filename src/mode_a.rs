@@ -1,4 +1,4 @@
-use super::dit_core::{Action, HexString, Mode, State};
+use super::dit_core::{self, Action, HexString, Ledger, Mode, State};
 use serde::{Deserialize, Serialize};
 
 pub mod spells {
@@ -25,10 +25,18 @@ pub enum ActionA {
 impl Action for ActionA {
     type State = StateA;
 
-    fn apply(&self, state: Self::State) -> Self::State {
+    fn apply(&self, _ledger: Ledger<ActionA>, state: Self::State) -> Result<Self::State, dit_core::Error<ActionA>> {
         match self {
             ActionA::UpdateVersion { version } => state.update_version(*version),
-            _ => state,
+            _ => Ok(state),
+        }
+    }
+
+
+    fn applicable(&self, _ledger: Ledger<Self>, state: Self::State) -> bool {
+        match self {
+            ActionA::UpdateVersion { version } => state.version() < *version,
+            _ => true,
         }
     }
 
@@ -85,14 +93,12 @@ impl StateA {
         self.hp
     }
 
-    pub fn update_version(&self, version: usize) -> StateA {
+    pub fn update_version(&self, version: usize) -> Result<StateA, dit_core::Error<ActionA>> {
         if self.version > version {
-            panic!(
-                "Attempting to upgrade from version {} to previous version {} is not allowed.",
-                self.version, version
-            );
+            Err (dit_core::Error::BadAction)
+        } else {
+        Ok(StateA { version, ..*self })
         }
-        StateA { version, ..*self }
     }
 }
 

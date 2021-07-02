@@ -1,4 +1,4 @@
-use super::{Action, Error, Message};
+use super::{Action, Error, Ledger, Message};
 use serde_json;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, Write};
@@ -29,7 +29,7 @@ where
             let line = line_result.map_err(io_error(file_name))?;
             let new_message =
                 serde_json::from_str::<Message<A>>(line.as_str()).map_err(Error::SerdeError)?;
-            Ok((new_message.action().apply(state), new_message))
+            new_message.action().apply(Ledger::new(), state).map(|state|(state, new_message))
         },
     )?;
 
@@ -54,7 +54,7 @@ pub fn validate<A: Action>(file_name: &str) -> Result<(), Error<A>> {
             (A::State::default(), Message::default()),
             |(state, last_message), (next_message, line_number)| {
                 if last_message.accepts_next_message(&next_message, &state) {
-                    Ok((next_message.action().apply(state), next_message))
+                    next_message.action().apply(Ledger::new(), state).map(|state|(state, next_message))
                 } else {
                     Err(Error::FailedValidation {
                         file_name: String::from(file_name),

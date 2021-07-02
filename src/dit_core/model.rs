@@ -18,6 +18,7 @@ pub enum Error<A: Action> {
         last_message: Message<A>,
         failed_message: Message<A>,
     },
+    BadAction  // Impl better later
 }
 
 /// A wrapper for a string of hexadecimal characters
@@ -27,7 +28,7 @@ pub enum Error<A: Action> {
 pub struct HexString(String);
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(bound = "A: Action")]
+#[serde(bound = "A: Action", from = "(HexString, A)", into = "(HexString, A)")]
 pub struct Message<A: Action> {
     key: HexString,
     action: A,
@@ -37,6 +38,28 @@ pub struct Message<A: Action> {
 pub enum Mode {
     A,
     B,
+}
+
+pub struct Ledger<A: Action>(Vec<Message<A>>);
+
+impl <A: Action> Ledger<A> {
+    pub fn new() -> Self {
+        Ledger(vec![])
+    }
+}
+
+/// Deserialize it from a tuple
+impl <A: Action> From<(HexString, A)> for Message<A> {
+    fn from((key, action): (HexString, A)) -> Message<A>{
+        Message { key, action }
+    }
+}
+
+/// Serialize it from a tuple
+impl <A: Action> Into<(HexString, A)> for Message<A> {
+    fn into(self) -> (HexString, A) {
+        (self.key, self.action)
+    }
 }
 
 impl<A: Action> Message<A> {
@@ -148,7 +171,8 @@ impl<A: Action> fmt::Display for Error<A> {
             Error::IoError(file_name, err) if err.kind() == io::ErrorKind::NotFound  => write!(f, "Um, sorry, but I can't find {}.", file_name.as_str()),
             Error::FailedValidation {file_name, line_number, last_message, failed_message} => write!(f,"Welp, looks like this file, {}, is invalid. You've got a bad link on line {}.\nFrom {}\nTo-> {}", file_name, line_number, last_message, failed_message),
             Error::IoError(file_name, err) => write!(f, "Sorry, I tried reading {}, but I ran into a problem and got this error:\n{}", file_name, err),
-            Error::SerdeError(err) => write!(f, "Dang it, I messed up. I ran into a serialization problem:\n{}", err)
+            Error::SerdeError(err) => write!(f, "Dang it, I messed up. I ran into a serialization problem:\n{}", err),
+            Error::BadAction => write!(f , "This error message is a work in progress, but an action did a bad") // TODO fix this error message
         }
     }
 }
