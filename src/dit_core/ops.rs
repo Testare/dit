@@ -29,7 +29,10 @@ where
             let line = line_result.map_err(io_error(file_name))?;
             let new_message =
                 serde_json::from_str::<Message<A>>(line.as_str()).map_err(Error::SerdeError)?;
-            new_message.action().apply(Ledger::new(), state).map(|state|(state, new_message))
+            new_message
+                .action()
+                .apply(Ledger::new(), state)
+                .map(|state| (state, new_message))
         },
     )?;
 
@@ -54,7 +57,10 @@ pub fn validate<A: Action>(file_name: &str) -> Result<(), Error<A>> {
             (A::State::default(), Message::default()),
             |(state, last_message), (next_message, line_number)| {
                 if last_message.accepts_next_message(&next_message, &state) {
-                    next_message.action().apply(Ledger::new(), state).map(|state|(state, next_message))
+                    next_message
+                        .action()
+                        .apply(Ledger::new(), state)
+                        .map(|state| (state, next_message))
                 } else {
                     Err(Error::FailedValidation {
                         file_name: String::from(file_name),
@@ -79,7 +85,6 @@ pub fn io_error<A: Action>(file_name: &str) -> impl FnOnce(io::Error) -> Error<A
 pub fn dit_result<A: Action, T>(result: Result<T, serde_json::Error>) -> Result<T, Error<A>> {
     result.map_err(Error::SerdeError)
 }
-
 
 #[cfg(test)]
 mod test {

@@ -25,13 +25,16 @@ pub enum ActionA {
 impl Action for ActionA {
     type State = StateA;
 
-    fn apply(&self, _ledger: Ledger<ActionA>, state: Self::State) -> Result<Self::State, dit_core::Error<ActionA>> {
+    fn apply(
+        &self,
+        _ledger: Ledger<ActionA>,
+        state: Self::State,
+    ) -> Result<Self::State, dit_core::Error<ActionA>> {
         match self {
             ActionA::UpdateVersion { version } => state.update_version(*version),
             _ => Ok(state),
         }
     }
-
 
     fn applicable(&self, _ledger: Ledger<Self>, state: Self::State) -> bool {
         match self {
@@ -95,9 +98,9 @@ impl StateA {
 
     pub fn update_version(&self, version: usize) -> Result<StateA, dit_core::Error<ActionA>> {
         if self.version > version {
-            Err (dit_core::Error::BadAction)
+            Err(dit_core::Error::BadAction)
         } else {
-        Ok(StateA { version, ..*self })
+            Ok(StateA { version, ..*self })
         }
     }
 }

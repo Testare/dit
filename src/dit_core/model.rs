@@ -18,7 +18,7 @@ pub enum Error<A: Action> {
         last_message: Message<A>,
         failed_message: Message<A>,
     },
-    BadAction  // Impl better later
+    BadAction, // Impl better later
 }
 
 /// A wrapper for a string of hexadecimal characters
@@ -42,21 +42,21 @@ pub enum Mode {
 
 pub struct Ledger<A: Action>(Vec<Message<A>>);
 
-impl <A: Action> Ledger<A> {
+impl<A: Action> Ledger<A> {
     pub fn new() -> Self {
         Ledger(vec![])
     }
 }
 
 /// Deserialize it from a tuple
-impl <A: Action> From<(HexString, A)> for Message<A> {
-    fn from((key, action): (HexString, A)) -> Message<A>{
+impl<A: Action> From<(HexString, A)> for Message<A> {
+    fn from((key, action): (HexString, A)) -> Message<A> {
         Message { key, action }
     }
 }
 
 /// Serialize it from a tuple
-impl <A: Action> Into<(HexString, A)> for Message<A> {
+impl<A: Action> Into<(HexString, A)> for Message<A> {
     fn into(self) -> (HexString, A) {
         (self.key, self.action)
     }
@@ -177,7 +177,6 @@ impl<A: Action> fmt::Display for Error<A> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::HexString;
@@ -214,5 +213,25 @@ mod test {
     #[ignore]
     fn tampered_message_is_not_accepted_by_previous_message() {
         todo!("Create a message, serialize it to string, replace the content with string replace (Use a non hex character), then deserialize it and see that it doesn't validate. Test with assert!(!..), not should_panic");
+    }
+}
+
+/// WIP not sure quite how to do this.
+/// A struct that can be passed with the execution of an action to have certain things happen
+struct ActionHooks {
+    invalid: Box<dyn FnOnce() -> ()>,
+    iter: Box<dyn Fn(HexString) -> ()>,
+    success: Box<dyn Fn(HexString) -> ()>,
+    iter_frequency: u32,
+}
+
+impl Default for ActionHooks {
+    fn default() -> Self {
+        ActionHooks {
+            iter_frequency: 1,
+            invalid: Box::new(|| {}),
+            iter: Box::new(|_| {}),
+            success: Box::new(|_| {}),
+        }
     }
 }

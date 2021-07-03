@@ -1,4 +1,4 @@
-use super::{HexString, Mode, Ledger, Error};
+use super::{Error, HexString, Ledger, Mode};
 use serde::{de::DeserializeOwned, Serialize};
 
 /// Represents a change in state.
@@ -16,10 +16,9 @@ use serde::{de::DeserializeOwned, Serialize};
 pub trait Action: ToString + Serialize + DeserializeOwned + Default + Clone {
     type State: State;
     // fn apply(&self, state: Self::State) -> Self::State; //Option<Self::State> or Result<<Self::State, Error> ?
-    fn apply(&self, _ledger: Ledger<Self>, state: Self::State) -> Result<Self::State, Error<Self>>; 
-    fn applicable(&self, ledger: Ledger<Self>, state: Self::State) -> bool;
+    fn apply(&self, _ledger: Ledger<Self>, state: Self::State) -> Result<Self::State, Error<Self>>;
+    fn applicable(&self, ledger: Ledger<Self>, state: Self::State) -> bool; // Should perhaps return an Option<Error<Self>> instead?
     fn bit_cost(&self, state: &Self::State) -> usize;
-
 }
 
 pub trait State: Default {
