@@ -27,7 +27,7 @@ impl Action for ActionA {
 
     fn apply(
         &self,
-        _ledger: Ledger<ActionA>,
+        _ledger: &Ledger<ActionA>,
         state: Self::State,
     ) -> Result<Self::State, dit_core::Error<ActionA>> {
         match self {
@@ -36,7 +36,7 @@ impl Action for ActionA {
         }
     }
 
-    fn applicable(&self, _ledger: Ledger<Self>, state: Self::State) -> bool {
+    fn applicable(&self, _ledger: &Ledger<Self>, state: &Self::State) -> bool {
         match self {
             ActionA::UpdateVersion { version } => state.version() < *version,
             _ => true,
@@ -106,7 +106,7 @@ impl StateA {
 }
 
 impl State for StateA {
-    fn read_header_line(&self, _header_line: &str) -> Self {
+    fn read_header_line(self, _header_line: &str) -> Self {
         self.clone()
     }
 

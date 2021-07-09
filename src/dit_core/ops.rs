@@ -31,7 +31,7 @@ where
                 serde_json::from_str::<Message<A>>(line.as_str()).map_err(Error::SerdeError)?;
             new_message
                 .action()
-                .apply(Ledger::new(), state)
+                .apply(&Ledger::new(), state)
                 .map(|state| (state, new_message))
         },
     )?;
@@ -42,6 +42,28 @@ where
     write!(file, "{}\n", message_string).map_err(io_error(file_name))?;
     Ok(())
 }
+
+
+/// Read file to game state and ledger
+/// Later will be refactored to take in any Read
+pub fn read_state<A>(file_name: &str) -> Result<(A::State, Ledger<A>), Error<A>>
+where
+    A: Action
+{
+    let file = OpenOptions::new()
+        .read(true)
+        .open(file_name)
+        .map_err(io_error(file_name))?;
+
+    let file_lines: Vec<String> = BufReader::new(&file).lines().collect::<Result<Vec<String>, io::Error>>().map_err(io_error(file_name))?;
+    let message_vec: Vec<Message<A>> = file_lines.iter().map(|line|serde_json::from_str::<Message<A>>(line.as_str())).collect::<Result<_,_>>().map_err(Error::SerdeError)?;
+    let ledger: Ledger<A> = Ledger::from(&message_vec);
+    let state = message_vec.iter().try_fold(A::State::default(), |state, message| {
+        message.action().apply(&ledger, state)
+    })?;
+    Ok((state, ledger))
+}
+
 
 /// Checks whether a file is valid by checking the hashes of the Messages
 /// It also fully constructs the game state in the process, since we sometimes
@@ -59,7 +81,7 @@ pub fn validate<A: Action>(file_name: &str) -> Result<(), Error<A>> {
                 if last_message.accepts_next_message(&next_message, &state) {
                     next_message
                         .action()
-                        .apply(Ledger::new(), state)
+                        .apply(&Ledger::new(), state)
                         .map(|state| (state, next_message))
                 } else {
                     Err(Error::FailedValidation {

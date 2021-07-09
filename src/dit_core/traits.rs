@@ -16,14 +16,14 @@ use serde::{de::DeserializeOwned, Serialize};
 pub trait Action: ToString + Serialize + DeserializeOwned + Default + Clone {
     type State: State;
     // fn apply(&self, state: Self::State) -> Self::State; //Option<Self::State> or Result<<Self::State, Error> ?
-    fn apply(&self, _ledger: Ledger<Self>, state: Self::State) -> Result<Self::State, Error<Self>>;
-    fn applicable(&self, ledger: Ledger<Self>, state: Self::State) -> bool; // Should perhaps return an Option<Error<Self>> instead?
+    fn apply(&self, ledger: &Ledger<Self>, state: Self::State) -> Result<Self::State, Error<Self>>;
+    fn applicable(&self, ledger: &Ledger<Self>, state: &Self::State) -> bool; // Should perhaps return an Option<Error<Self>> instead?
     fn bit_cost(&self, state: &Self::State) -> usize;
 }
 
 pub trait State: Default {
     /// Read state from header lines of a file
-    fn read_header_line(&self, header_line: &str) -> Self;
+    fn read_header_line(self, header_line: &str) -> Self;
     /// A hash that is supposedly unique to the file.
     fn root_hash(&self) -> HexString;
     /// What Mode this state is for

@@ -6,8 +6,8 @@ mod ops;
 mod traits;
 mod work;
 
-pub use model::{Error, HexString, Ledger, Message, Mode};
-pub use ops::{validate, with_game_state};
+pub use model::{Error, HexString, Ledger, Message, Mode, ActionInterface};
+pub use ops::{validate, with_game_state, read_state};
 pub use traits::{Action, State};
 
 use work::bit_match;
