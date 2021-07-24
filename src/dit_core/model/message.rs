@@ -1,11 +1,11 @@
-use super::{HexString};
-use super::super::{Action};
-use super::super::{bit_match};
+use super::super::bit_match;
+use super::super::Action;
+use super::HexString;
 
-use sha3::{Digest, Sha3_224};
-use serde::{Deserialize, Serialize};
 use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 use serde_json;
+use sha3::{Digest, Sha3_224};
 use std::{fmt, fmt::Display, iter};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]

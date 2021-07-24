@@ -1,4 +1,4 @@
-use super::super::{Action};
+use super::super::Action;
 use super::{Message, Mode};
 use serde_json;
 use std::{fmt, io};

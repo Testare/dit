@@ -1,40 +1,41 @@
-use super::{Error, Ledger, HexString, Message};
 use super::super::Action;
-
-
-
+use super::{Error, HexString, Ledger, Message};
 
 /// WIP not sure quite how to do this.
 /// A struct that can be passed with the execution of an action to have certain things happen
 pub struct ActionInterface {
     invalid: Box<dyn Fn() -> ()>, // Should accept Error here, instead of returning result from `run`
-    iter: Box<dyn Fn(HexString) -> ()>, 
+    iter: Box<dyn Fn(HexString) -> ()>,
     success: Box<dyn Fn(&HexString) -> ()>,
     iter_period: u32,
 }
 
 impl ActionInterface {
-
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn on_fail<F>(&mut self, fail_function: F) -> &mut Self 
-        where F: Fn() -> () + 'static {
+    pub fn on_fail<F>(&mut self, fail_function: F) -> &mut Self
+    where
+        F: Fn() -> () + 'static,
+    {
         self.invalid = Box::new(fail_function);
         self
     }
 
-    pub fn on_success<F>(&mut self, success_function: F) -> &mut Self 
-        where F: Fn(&HexString) -> () + 'static {
+    pub fn on_success<F>(&mut self, success_function: F) -> &mut Self
+    where
+        F: Fn(&HexString) -> () + 'static,
+    {
         self.success = Box::new(success_function);
         self
-
     }
 
     // On attempt would be a better name
-    pub fn on_iter<F>(&mut self, iter_hook: F) -> &mut Self 
-        where F: Fn(HexString) -> () + 'static {
+    pub fn on_iter<F>(&mut self, iter_hook: F) -> &mut Self
+    where
+        F: Fn(HexString) -> () + 'static,
+    {
         self.iter = Box::new(iter_hook);
         self
     }

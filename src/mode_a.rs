@@ -1,4 +1,4 @@
-use super::dit_core::{self, Action, HexString, PendingLedger, Ledger, Mode, State};
+use super::dit_core::{self, Action, HexString, Ledger, Mode, PendingLedger, State};
 use serde::{Deserialize, Serialize};
 
 pub mod spells {

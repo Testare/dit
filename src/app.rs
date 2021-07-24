@@ -1,4 +1,4 @@
-use super::dit_core::{validate, with_game_state, read_state, ActionInterface};
+use super::dit_core::{read_state, validate, with_game_state, ActionInterface};
 use super::mode_a::ActionA;
 use clap::{App, Arg, ArgMatches, SubCommand};
 
@@ -37,7 +37,7 @@ pub fn handle_matches(app_m: ArgMatches) {
     match app_m.subcommand() {
         ("update", Some(arg_m)) => {
             let file_name: &str = arg_m.value_of("filename").unwrap_or(".dit");
-            let version: usize = arg_m.value_of("version").unwrap_or("5").parse::<>().unwrap();
+            let version: usize = arg_m.value_of("version").unwrap_or("5").parse().unwrap();
             let (state, ledger) = read_state::<ActionA>(file_name).unwrap();
 
             ActionInterface::new()
@@ -45,7 +45,7 @@ pub fn handle_matches(app_m: ArgMatches) {
                 .on_iter(|hex_string| println!("-> {}", hex_string.to_string()))
                 .on_fail(|| println!("Oooooh, we failed"))
                 .on_success(|hex_string| println!("-> {} wins!", hex_string.to_string()))
-                .run(ActionA::UpdateVersion{version}, ledger, state)
+                .run(ActionA::UpdateVersion { version }, ledger, state)
                 .unwrap();
         }
         ("test", Some(arg_m)) => {
@@ -84,7 +84,7 @@ fn subcommand_raw_add<'a, 'b>() -> App<'a, 'b> {
                 .long("filename")
                 .short("f")
                 .takes_value(true)
-                .value_name("FILENAME")
+                .value_name("FILENAME"),
         )
         .arg(
             Arg::with_name("content")
@@ -105,19 +105,19 @@ fn subcommand_validate<'a, 'b>() -> App<'a, 'b> {
 }
 
 fn subcommand_update<'a, 'b>() -> App<'a, 'b> {
-    SubCommand::with_name("update").arg(
-        Arg::with_name("filename")
-            .help("Select file to update")
-            .index(1)
-            .required(false)
-    )
-    .arg(
-        Arg::with_name("version")
-            .help("The version target for the update")
-            .long("version")
-            .short("v")
-            .takes_value(true)
-            .value_name("VERSION")
-    )
-
+    SubCommand::with_name("update")
+        .arg(
+            Arg::with_name("filename")
+                .help("Select file to update")
+                .index(1)
+                .required(false),
+        )
+        .arg(
+            Arg::with_name("version")
+                .help("The version target for the update")
+                .long("version")
+                .short("v")
+                .takes_value(true)
+                .value_name("VERSION"),
+        )
 }

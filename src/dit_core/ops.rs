@@ -12,8 +12,8 @@ use std::io::{self, BufRead, BufReader, Write};
 /// Takes a filename, and a clojure that generates an Action (Or Error). If clojure returns successful,
 /// We attempt to apply it to the state, and if THAT works, we save it to the file.
 #[deprecated(
-    since="0",
-    note="We'll be using book instead, only keeping this around to scale refactor"
+    since = "0",
+    note = "We'll be using book instead, only keeping this around to scale refactor"
 )]
 pub fn with_game_state<A, F>(file_name: &str, action_apply: F) -> Result<(), Error<A>>
 where
@@ -47,27 +47,36 @@ where
     Ok(())
 }
 
-
 /// Read file to game state and ledger
 /// Later will be refactored to take in any Read
 pub fn read_state<A>(file_name: &str) -> Result<(A::State, Ledger<A>), Error<A>>
 where
-    A: Action
+    A: Action,
 {
     let file = OpenOptions::new()
         .read(true)
         .open(file_name)
         .map_err(io_error(file_name))?;
 
-    let file_lines: Vec<String> = BufReader::new(&file).lines().collect::<Result<Vec<String>, io::Error>>().map_err(io_error(file_name))?;
-    let message_vec: Vec<Message<A>> = file_lines.iter().map(|line|serde_json::from_str::<Message<A>>(line.as_str())).collect::<Result<_,_>>().map_err(Error::SerdeError)?;
+    let file_lines: Vec<String> = BufReader::new(&file)
+        .lines()
+        .collect::<Result<Vec<String>, io::Error>>()
+        .map_err(io_error(file_name))?;
+    let message_vec: Vec<Message<A>> = file_lines
+        .iter()
+        .map(|line| serde_json::from_str::<Message<A>>(line.as_str()))
+        .collect::<Result<_, _>>()
+        .map_err(Error::SerdeError)?;
     let ledger: Ledger<A> = Ledger::from(&message_vec[..]);
-    let state = message_vec.iter().try_fold(A::State::default(), |state, message| {
-        message.action().apply(&ledger.with_hash(message.key()), state)
-    })?;
+    let state = message_vec
+        .iter()
+        .try_fold(A::State::default(), |state, message| {
+            message
+                .action()
+                .apply(&ledger.with_hash(message.key()), state)
+        })?;
     Ok((state, Ledger::default())) // BROKEN
 }
-
 
 /// Checks whether a file is valid by checking the hashes of the Messages
 /// It also fully constructs the game state in the process, since we sometimes
