@@ -1,4 +1,4 @@
-use super::dit_core::{self, Action, HexString, Ledger, Mode, State};
+use super::dit_core::{self, Action, HexString, PendingLedger, Ledger, Mode, State};
 use serde::{Deserialize, Serialize};
 
 pub mod spells {
@@ -27,7 +27,7 @@ impl Action for ActionA {
 
     fn apply(
         &self,
-        _ledger: &Ledger<ActionA>,
+        _ledger: &PendingLedger<ActionA>,
         state: Self::State,
     ) -> Result<Self::State, dit_core::Error<ActionA>> {
         match self {

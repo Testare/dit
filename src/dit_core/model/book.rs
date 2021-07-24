@@ -12,13 +12,13 @@ type MessageVec<A> = Vec<Message<A>>;
 #[derive(Clone)]
 pub struct Book<A: Action> {
     saved_lines: usize,
-    ledger: Ledger<A>,
+    messages: MessageVec<A>,
     state: A::State
 }
 
 impl <A:Action> Book<A> {
-    pub fn ledger(&self) -> &Ledger<A> {
-        &self.ledger
+    pub fn ledger(&self) -> Ledger<'_, A> {
+        Ledger::from(&self.messages[..])
     }
 
     pub fn state(&self) -> &A::State {
@@ -27,11 +27,11 @@ impl <A:Action> Book<A> {
 
     pub fn write_changes<W: Write> (&mut self, writer: &mut W) {
         self.write_pending_changes(writer);
-        self.saved_lines = self.ledger.ledger_vec().len();
+        self.saved_lines = self.messages.len();
     }
 
     pub fn write_pending_changes<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        self.ledger.iter().skip(self.saved_lines).try_for_each(|line| {
+        self.messages.iter().skip(self.saved_lines).try_for_each(|line| {
             writeln!(writer, "{}", line)
         })
     }
@@ -52,52 +52,80 @@ impl <A:Action> Book<A> {
         // let mode: String = iter.next();
         // do some mode checking
         let mut state = A::State::default(); //Self::from_read_header(iter.by_ref());
-        /*let ledger: Ledger<A> = iter.map(|line_result|line_result
-            .map_err(super::Error::IoError2)
-            .and_then(|line|serde_json::from_str::<Message<A>>(line.as_str()).map_err(super::Error::SerdeError))).collect::<Result<_, _>> ()?;
-        let saved_lines = ledger.len();
-        state = ledger.iter().try_fold(state, |state, msg| msg.action().apply(state))?;*/
 
-        iter.map(|line_result|line_result
+        let messages: MessageVec<A> = iter.map(|line_result|line_result
             .map_err(super::Error::IoError2)
             .and_then(|line|serde_json::from_str::<Message<A>>(line.as_str()).map_err(super::Error::SerdeError)))
-            .try_fold(Book{ state, ledger: Ledger::default(), saved_lines: 0}, |book, msg_res| msg_res.and_then(|msg|book.apply_message(msg)))
+            .collect::<Result<_, _>>()?;
+        let saved_lines = messages.len();
+        let state = (0..saved_lines).try_fold(A::State::default(), |state, n| {
+            let (messages_to_point, rest) = messages.split_at(n);
+            let next_message = rest.first().unwrap();
+            Self::apply_message_internal(messages_to_point, next_message, state)
+        })?;
 
-            /*
-        Ok(Book{
+        Ok(Book {
+            messages,
             saved_lines,
-            ledger,
-            state,
-        })*/
-    }
-
-    fn apply_message(mut self, msg: Message<A>) -> Result<Self, super::Error<A>> {
-        let action = msg.action().clone();
-        self.ledger.ledger_vec_mut().push(msg);
-        let Book {ledger, state, saved_lines} = self;
-        let state = action.apply(self.ledger(), self.state)?;
-        return Ok( Book {
-            saved_lines: self.saved_lines,
-            ledger: self.ledger,
             state
         })
     }
+
+    fn apply_message_internal(message_slice: &[Message<A>], msg: &Message<A>, state: A::State) -> Result<A::State, super::Error<A>> {
+        let action = msg.action();
+        let ledger = Ledger::from(message_slice);
+        if action.applicable(&ledger, &state) {
+            action.apply(&ledger.with_hash(msg.key()), state)
+        } else {
+            Err(super::Error::BadAction)
+        }
+    }
+
+    pub fn apply_message(&mut self, msg: Message<A>) -> Result<&mut Self, super::Error<A>> {
+        // Is this really the right pattern of ownership? It seems like this will create a lot of copies of default state...
+        // Perhaps clone() would be better, since we need the Book to survive the message being applied. This function
+        // is only invoked on new action, not on loading messages, so optimization is not as heavily needed (especially)
+        // considering that we have a specifically time-consuming proof-of-work generator function
+        // Or perhaps just don't pass it as mutable?
+        self.state = Self::apply_message_internal(&self.messages[..], &msg, std::mem::take(&mut self.state))?;
+        self.messages.push(msg);
+        Ok(self)
+    }
 }
 
-/*impl <A: Action, R:Read> TryFrom<R> for Book<A> {
+/*
+impl <A: Action, R:Read> TryFrom<R> for Book<A> {
     type Error = io::Error;
     fn try_from(read: R) -> Result<Book<A>, Self::Error> {
         Ok(Book::default())
     }
-}*/
+}
+*/
 
 
 impl <A: Action> Default for Book<A> {
     fn default() -> Book<A> {
         Book {
             saved_lines: 0,
-            ledger: Ledger::default(),
+            messages: Vec::new(),
             state: A::State::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::Book;
+    use std::io::Cursor;
+    use std::convert::TryFrom;
+    use super::super::super::super::mode_a::ActionA; // Change later to some test action
+
+    #[test]
+    #[should_panic]
+    fn book_from_read() {
+        let cursor = Cursor::new("Bag of beans, barely even human\nsavages, savages, wrotten to the core");
+
+        let book = Book::<ActionA>::from_read(cursor).expect("Should be readable");
     }
 }

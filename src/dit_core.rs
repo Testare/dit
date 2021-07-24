@@ -6,7 +6,7 @@ mod ops;
 mod traits;
 mod work;
 
-pub use model::{Error, HexString, Ledger, Message, Mode, ActionInterface};
+pub use model::{Error, HexString, PendingLedger, Ledger, Message, Mode, ActionInterface};
 pub use ops::{validate, with_game_state, read_state};
 pub use traits::{Action, State};
 

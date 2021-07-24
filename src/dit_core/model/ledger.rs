@@ -1,53 +1,69 @@
 use super::super::Action;
-use super::Message;
-use std::slice::Iter;
+use super::{Message, HexString};
 use std::iter::FromIterator;
 
 #[derive(Clone)]
-pub struct Ledger<A: Action>(Vec<Message<A>>);
+pub struct Ledger<'a, A: Action>(&'a [Message<A>]);
 
-impl<A: Action> Ledger<A> {
+pub struct PendingLedger<'a, A: Action>(&'a [Message<A>], &'a HexString);
+
+impl<'a, A: Action> Ledger<'a, A> {
+
+    const EMPTY_MESSAGES: [Message<A>; 0] = [];
+
     pub fn new() -> Self {
-        Ledger::default()
+        Ledger(&Ledger::<A>::EMPTY_MESSAGES[..])
     }
 
-    pub fn ledger_vec(&self) -> &Vec<Message<A>> {
-        &self.0
-    }
-    
-    pub fn ledger_vec_mut(&mut self) -> &mut Vec<Message<A>> {
-        &mut self.0
+    pub fn messages(&self)-> &[Message<A>] {
+        self.0
     }
 
-    pub fn iter(&self) -> Iter<Message<A>> {
-        self.0.iter()
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
+    pub fn with_hash(&self, next_hash: &'a HexString) -> PendingLedger<'a, A> {
+        PendingLedger(self.0, next_hash)
     }
 }
 
-impl <A: Action> From<Vec<Message<A>>> for Ledger<A> {
+impl<'a, A:Action> PendingLedger<'a, A> {
+    pub fn messages(&self)-> &[Message<A>] {
+        self.0
+    }
+
+    pub fn next_hash(&self) -> &HexString {
+        self.1
+    }
+
+}
+
+impl <'a, A: Action> From<&'a [Message<A>]> for Ledger<'a, A> {
+    fn from(messages: &'a [Message<A>]) -> Self {
+        Ledger(messages)
+    }
+}
+
+/*
+impl <'a, A: Action> From<Vec<Message<A>>> for Ledger<'a, A> {
     fn from(vec: Vec<Message<A>>) -> Self {
-        Ledger(vec)
+        Ledger(&vec[..], None)
     }
 }
 
-impl <A: Action> From<&Vec<Message<A>>> for Ledger<A> {
-    fn from(vec: &Vec<Message<A>>) -> Self {
-        Ledger(vec.clone())
+impl <'a, A: Action> From<&'a Vec<Message<A>>> for Ledger<'a, A> {
+    fn from(vec: &'a Vec<Message<A>>) -> Self {
+        Ledger(vec, None)
     }
 }
 
-impl <A: Action> Default for Ledger<A> {
-    fn default() -> Ledger<A> {
-        Ledger(vec![])
+impl <'a, A: Action> FromIterator<Message<A>> for Ledger<'a, A> {
+    fn from_iter<I: IntoIterator<Item=Message<A>>> (iter: I) -> Ledger<'a, A> {
+        Ledger(&iter.into_iter().collect::<Vec<_>>(), None)
     }
 }
+*/
 
-impl <A: Action> FromIterator<Message<A>> for Ledger<A> {
-    fn from_iter<I: IntoIterator<Item=Message<A>>> (iter: I) -> Ledger<A> {
-        Ledger(iter.into_iter().collect())
+impl <'a, A: Action> Default for Ledger<'a, A> {
+
+    fn default() -> Ledger<'a, A> {
+        Ledger::new()
     }
 }

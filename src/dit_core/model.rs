@@ -9,7 +9,7 @@ pub use action_interface::ActionInterface;
 pub use book::Book;
 pub use error::Error;
 pub use hex_string::HexString;
-pub use ledger::Ledger;
+pub use ledger::{Ledger, PendingLedger};
 pub use message::Message;
 
 use serde::{Deserialize, Serialize};
@@ -19,6 +19,7 @@ pub enum Mode {
     // Should this be an enum, or just a newtape for Char? Opens possibility for many unicode characters instead of just whatever is defined here, allowing for unofficial modes
     A,
     B,
+    N
 }
 
 #[cfg(test)]

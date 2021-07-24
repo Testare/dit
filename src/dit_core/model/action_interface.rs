@@ -55,13 +55,14 @@ impl ActionInterface {
 
         if action.applicable(&ledger, &state) {
             let next_message = ledger
-                .ledger_vec()
+                .messages()
                 .last()
                 .unwrap_or(&Message::<A>::default())
                 .gen_next_message_with_hook(action, &state, &self.iter, self.iter_period);
+
             let result = next_message
                 .action()
-                .apply(&ledger, state)
+                .apply(&ledger.with_hash(next_message.key()), state)
                 .map(|_| (*self.success)(next_message.key()));
             if result.is_err() {
                 (*self.invalid)();
